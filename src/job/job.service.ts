@@ -135,22 +135,42 @@ export class JobService {
         try {
             const { numOfRows = 10, pageNo = 1, searchKeyword = '' } = params;
 
+            // 다양한 검색 파라미터 시도
+            const queryParams: any = {
+                serviceKey: this.dataGoKrApiKey,
+                numOfRows,
+                pageNo,
+                resultType: 'json',
+            };
+
+            // 검색어가 있을 경우 다양한 파라미터명으로 시도
+            if (searchKeyword) {
+                queryParams.keyword = searchKeyword;  // 일반적인 파라미터명
+                queryParams.searchKeyword = searchKeyword;
+                queryParams.search = searchKeyword;
+            }
+
+            this.logger.log('=== Data.go.kr API 호출 시작 ===');
+            this.logger.log('검색 키워드:', searchKeyword || '없음');
+            this.logger.log('요청 URL:', this.dataGoKrApiUrl);
+            this.logger.log('요청 파라미터:', JSON.stringify(queryParams, null, 2));
+
             const response = await axios.get(this.dataGoKrApiUrl, {
-                params: {
-                    serviceKey: this.dataGoKrApiKey,
-                    numOfRows,
-                    pageNo,
-                    resultType: 'json',
-                    ...(searchKeyword && { searchKeyword }),
-                },
+                params: queryParams,
                 timeout: 10000,
             });
 
-            this.logger.log('Data.go.kr API 응답:', JSON.stringify(response.data).substring(0, 200));
+            this.logger.log('응답 상태:', response.status);
+            this.logger.log('응답 데이터 일부:', JSON.stringify(response.data).substring(0, 500));
+            this.logger.log('=== API 호출 완료 ===');
 
             return response.data;
         } catch (error) {
             this.logger.error('Data.go.kr API 호출 실패:', error);
+            if (axios.isAxiosError(error)) {
+                this.logger.error('에러 상태:', error.response?.status);
+                this.logger.error('에러 데이터:', error.response?.data);
+            }
             throw new Error('채용공고 조회 중 오류가 발생했습니다.');
         }
     }
