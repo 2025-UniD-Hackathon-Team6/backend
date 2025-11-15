@@ -19,7 +19,7 @@ jobs:
           port: ${{ secrets.REMOTE_SSH_PORT }}
           script: |
             cd /home/ubuntu/app/Unid
-            git pull origin 
+            git pull origin main
             pm2 kill
             npm i --legacy-peer-deps
             npm run build
