@@ -13,6 +13,7 @@ export class DailyController {
     @Get('keyword')
     @ApiOperation({ summary: '오늘의 키워드 조회', description: '오늘의 키워드를 조회합니다.' })
     @ApiResponse({ status: 200, description: '키워드 조회 성공' })
+    @ApiResponse({ status: 404, description: '관심 직무가 존재하지 않음' })
     @ApiResponse({ status: 401, description: '인증 실패' })
     async getTodayKeyword(@Req() req: AuthenticatedRequest) {
         const userId = req.user.id;
@@ -22,6 +23,7 @@ export class DailyController {
     @Get('report')
     @ApiOperation({ summary: '오늘의 산업 리포트 조회', description: '오늘의 산업 리포트를 조회합니다.' })
     @ApiResponse({ status: 200, description: '리포트 조회 성공' })
+    @ApiResponse({ status: 404, description: '관심 직무가 존재하지 않음' })
     @ApiResponse({ status: 401, description: '인증 실패' })
     async getTodayReport(@Req() req: AuthenticatedRequest) {
         const userId = req.user.id;
