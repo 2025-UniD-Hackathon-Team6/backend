@@ -95,18 +95,20 @@ export class JobController {
     @AuthNotNeeded()
     @ApiOperation({
         summary: '직무/직군에 따른 채용공고 추천',
-        description: '사용자의 관심 직군/직무에 따라 공공데이터 포털의 채용공고를 추천합니다. 인증된 사용자의 경우 관심사를 기반으로, 비인증 사용자의 경우 전체 공고를 반환합니다.'
+        description: '사용자의 관심 직군/직무에 따라 공공데이터 포털의 채용공고를 추천합니다. 인증된 사용자의 경우 관심사를 기반으로, 비인증 사용자의 경우 전체 공고를 반환합니다. keyword 파라미터로 직접 검색어를 지정할 수도 있습니다.'
     })
     @ApiQuery({ name: 'numOfRows', required: false, type: Number, description: '결과 수 (기본값: 10)' })
+    @ApiQuery({ name: 'keyword', required: false, type: String, description: '검색 키워드 (예: 개발자, 디자이너)' })
     @ApiResponse({ status: 200, description: '채용공고 추천 성공' })
     @ApiResponse({ status: 500, description: '서버 오류' })
     async getRecommendedJobs(
         @Req() req: AuthenticatedRequest,
         @Query('numOfRows') numOfRows?: number,
+        @Query('keyword') keyword?: string,
     ) {
         const userId = req.user?.id; // 인증된 경우에만 userId가 있음
         const rows = numOfRows ? parseInt(numOfRows.toString(), 10) : 10;
 
-        return await this.jobService.getRecommendedJobs(userId, rows);
+        return await this.jobService.getRecommendedJobs(userId, rows, keyword);
     }
 }
