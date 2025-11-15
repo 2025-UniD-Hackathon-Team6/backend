@@ -28,6 +28,8 @@ model User {
   DailyAttendance DailyAttendance[]
   dailyKeywords    DailyKeyword[]
   dailyReports     DailyReport[]
+  communityPosts   CommunityPost[]
+  communityComments CommunityComment[]
 
   @@map("user")
 }
@@ -192,4 +194,39 @@ model DailyAttendance {
   @@unique([userId, checkinDate])
   @@index([userId])
   @@map("daily_attendance")
+}
+
+model CommunityPost {
+  id          Int      @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  title       String
+  content     String
+  viewCount   Int      @default(0) @map("view_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  comments    CommunityComment[]
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("community_posts")
+}
+
+model CommunityComment {
+  id          Int      @id @default(autoincrement())
+  postId      Int      @map("post_id")
+  userId      Int      @map("user_id")
+  content     String
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  post        CommunityPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([postId])
+  @@index([userId])
+  @@map("community_comments")
 }
