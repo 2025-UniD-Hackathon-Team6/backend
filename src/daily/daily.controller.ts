@@ -1,6 +1,6 @@
-import { Controller, Get, Request, UseGuards } from '@nestjs/common';
+import { Controller, Get, Req, UseGuards } from '@nestjs/common';
 import { DailyService } from './daily.service';
-import { JwtAuthGuard } from '@libs/jwt';
+import { JwtAuthGuard, type AuthenticatedRequest } from '@libs/jwt';
 
 @Controller('api/daily')
 @UseGuards(JwtAuthGuard)
@@ -12,8 +12,8 @@ export class DailyController {
    * 오늘의 키워드를 조회합니다.
    */
   @Get('keyword')
-  async getTodayKeyword(@Request() req) {
-    const userId = req.user.userId;
+  async getTodayKeyword(@Req() req: AuthenticatedRequest) {
+    const userId = req.user.id;
     return this.dailyService.getTodayKeyword(userId);
   }
 
@@ -22,8 +22,8 @@ export class DailyController {
    * 오늘의 산업 리포트를 조회합니다.
    */
   @Get('report')
-  async getTodayReport(@Request() req) {
-    const userId = req.user.userId;
+  async getTodayReport(@Req() req: AuthenticatedRequest) {
+    const userId = req.user.id;
     return this.dailyService.getTodayReport(userId);
   }
 }
