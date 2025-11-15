@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -11,9 +12,20 @@ import { JobModule } from './job/job.module';
 import { AttendController } from './attend/attend.controller';
 import { AttendService } from './attend/attend.service';
 import { AttendModule } from './attend/attend.module';
+import { DailyModule } from './daily/daily.module';
+import { UpstageModule } from './upstage/upstage.module';
 
 @Module({
-  imports: [AuthModule, PrismaModule, JwtAuthModule, JobModule, AttendModule],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    AuthModule,
+    PrismaModule,
+    JwtAuthModule,
+    JobModule,
+    AttendModule,
+    DailyModule,
+    UpstageModule,
+  ],
   controllers: [AppController, JobController, AttendController],
   providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }, AttendService],
 })
