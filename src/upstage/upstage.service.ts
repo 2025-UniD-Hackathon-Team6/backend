@@ -3,10 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
 
 interface PositionContext {
+  userId: number;
   positionName: string;
   categoryName: string;
   positionDescription?: string | null;
   categoryDescription?: string | null;
+  previousKeywords?: string[];
+  previousReports?: string[];
 }
 
 @Injectable()
@@ -74,16 +77,23 @@ export class UpstageService {
   }> {
     const positionInfo = this.buildPositionContext(context);
 
+    // 이전 키워드 목록 포맷팅
+    const previousKeywordsText =
+      context.previousKeywords && context.previousKeywords.length > 0
+        ? `\n\n이전에 제공한 키워드 목록 (절대 중복 금지):\n${context.previousKeywords.map((k, i) => `${i + 1}. ${k}`).join('\n')}`
+        : '';
+
     const messages = [
       {
         role: 'system' as const,
-        content: `당신은 취업 준비생을 돕는 전문 커리어 컨설턴트입니다. 최신 산업 트렌드와 채용 시장을 분석하여 도움이 되는 키워드를 제공합니다.`,
+        content: `당신은 취업 준비생을 돕는 전문 커리어 컨설턴트입니다. 최신 산업 트렌드와 채용 시장을 분석하여 도움이 되는 키워드를 제공합니다. 각 사용자(User ID: ${context.userId})에게 개인화된 맞춤형 콘텐츠를 제공합니다.`,
       },
       {
         role: 'user' as const,
         content: `다음 직무의 취업 준비생을 위한 오늘의 학습 키워드 1개를 추천해주세요.
 
-${positionInfo}
+사용자 ID: ${context.userId}
+${positionInfo}${previousKeywordsText}
 
 응답 형식:
 키워드: [키워드명]
@@ -93,7 +103,9 @@ ${positionInfo}
 1. 현재 ${context.categoryName} 분야의 ${context.positionName} 직무에서 중요한 기술, 개념, 트렌드를 반영
 2. 면접이나 실무에서 자주 언급되는 주제
 3. 하루 만에 기본 개념을 이해할 수 있는 수준의 키워드
-4. 각 사용자에게 매번 다른 키워드를 제공하여 다양한 학습 기회 제공`,
+4. 사용자 ID ${context.userId}에게 개인화된 다양한 키워드 제공
+5. **중요: 위에 나열된 이전 키워드와 절대 중복되지 않는 완전히 새로운 키워드를 제공해야 합니다**
+6. 이전 키워드와 유사하거나 관련된 키워드도 피하고, 완전히 다른 영역의 키워드를 선택하세요`,
       },
     ];
 
@@ -121,16 +133,23 @@ ${positionInfo}
   }> {
     const positionInfo = this.buildPositionContext(context);
 
+    // 이전 리포트 목록 포맷팅
+    const previousReportsText =
+      context.previousReports && context.previousReports.length > 0
+        ? `\n\n이전에 제공한 리포트 제목 목록 (절대 중복 금지):\n${context.previousReports.map((r, i) => `${i + 1}. ${r}`).join('\n')}`
+        : '';
+
     const messages = [
       {
         role: 'system' as const,
-        content: `당신은 산업 분석 전문가입니다. 최신 산업 뉴스와 트렌드를 분석하여 취업 준비생들에게 유용한 정보를 제공합니다.`,
+        content: `당신은 산업 분석 전문가입니다. 최신 산업 뉴스와 트렌드를 분석하여 취업 준비생들에게 유용한 정보를 제공합니다. 각 사용자(User ID: ${context.userId})에게 개인화된 맞춤형 콘텐츠를 제공합니다.`,
       },
       {
         role: 'user' as const,
         content: `다음 직무를 준비하는 취업 준비생을 위한 오늘의 3분 산업 리포트를 작성해주세요.
 
-${positionInfo}
+사용자 ID: ${context.userId}
+${positionInfo}${previousReportsText}
 
 응답 형식:
 제목: [리포트 제목]
@@ -143,7 +162,9 @@ ${positionInfo}
 3. 취업 준비생이 알아야 할 핵심 정보 포함
 4. 3분 안에 읽을 수 있는 분량 (500-800자)
 5. 실무에 도움이 되는 인사이트 제공
-6. 각 사용자에게 다양한 관점의 리포트를 제공`,
+6. 사용자 ID ${context.userId}에게 개인화된 다양한 관점의 리포트 제공
+7. **중요: 위에 나열된 이전 리포트 제목과 절대 중복되지 않는 완전히 새로운 주제의 리포트를 작성해야 합니다**
+8. 이전 리포트와 유사한 주제도 피하고, 완전히 다른 각도와 트렌드를 다루는 리포트를 작성하세요`,
       },
     ];
 
