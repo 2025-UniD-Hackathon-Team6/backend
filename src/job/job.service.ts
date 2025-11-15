@@ -176,6 +176,103 @@ export class JobService {
     }
 
     /**
+     * Data.go.kr API에서 채용공고를 가져와 DB에 저장합니다.
+     * @param numOfRows - 가져올 공고 수 (기본값: 100)
+     * @returns 저장된 공고 수
+     */
+    async syncJobPostingsFromDataGoKr(numOfRows: number = 100) {
+        try {
+            this.logger.log(`=== 채용공고 동기화 시작 (${numOfRows}개) ===`);
+
+            const response = await axios.get(this.dataGoKrApiUrl, {
+                params: {
+                    serviceKey: this.dataGoKrApiKey,
+                    numOfRows,
+                    pageNo: 1,
+                    resultType: 'json',
+                },
+                timeout: 10000,
+            });
+
+            const apiData = response.data;
+
+            if (!apiData.result || !Array.isArray(apiData.result)) {
+                this.logger.error('API 응답 형식 오류:', apiData);
+                throw new Error('잘못된 API 응답 형식입니다.');
+            }
+
+            this.logger.log(`API에서 ${apiData.result.length}개 공고 수신`);
+
+            // 기본 카테고리와 포지션 가져오기
+            const defaultCategory = await this.prisma.jobCategory.findFirst();
+            const defaultPosition = await this.prisma.jobPosition.findFirst();
+
+            if (!defaultCategory || !defaultPosition) {
+                throw new Error('기본 카테고리 또는 포지션이 없습니다. 먼저 생성해주세요.');
+            }
+
+            let savedCount = 0;
+
+            for (const job of apiData.result) {
+                try {
+                    // 마감일 파싱 (YYYYMMDD -> DateTime)
+                    let deadline = null;
+                    if (job.pbancEndYmd) {
+                        const year = job.pbancEndYmd.substring(0, 4);
+                        const month = job.pbancEndYmd.substring(4, 6);
+                        const day = job.pbancEndYmd.substring(6, 8);
+                        deadline = new Date(`${year}-${month}-${day}`);
+                    }
+
+                    // 중복 체크 (같은 제목과 회사명이 있으면 업데이트)
+                    const existing = await this.prisma.jobPosting.findFirst({
+                        where: {
+                            title: job.recrutPbancTtl,
+                            companyName: job.instNm,
+                        },
+                    });
+
+                    const postingData = {
+                        categoryId: defaultCategory.id,
+                        positionId: defaultPosition.id,
+                        companyName: job.instNm || '정보없음',
+                        title: job.recrutPbancTtl || '제목없음',
+                        description: job.recrutPbancTtl || '설명없음',
+                        location: job.workRgnNmLst || null,
+                        employmentType: job.hireTypeNmLst || null,
+                        deadline: deadline,
+                        sourceUrl: job.srcUrl || null,
+                    };
+
+                    if (existing) {
+                        await this.prisma.jobPosting.update({
+                            where: { id: existing.id },
+                            data: postingData,
+                        });
+                    } else {
+                        await this.prisma.jobPosting.create({
+                            data: postingData,
+                        });
+                        savedCount++;
+                    }
+                } catch (error) {
+                    this.logger.error(`공고 저장 실패:`, error);
+                }
+            }
+
+            this.logger.log(`=== 동기화 완료: ${savedCount}개 신규 저장 ===`);
+            return {
+                total: apiData.result.length,
+                saved: savedCount,
+                message: `${savedCount}개의 신규 공고가 저장되었습니다.`
+            };
+        } catch (error) {
+            this.logger.error('채용공고 동기화 실패:', error);
+            throw new Error('채용공고 동기화 중 오류가 발생했습니다.');
+        }
+    }
+
+    /**
      * 사용자의 관심 직군/직무에 따른 채용공고를 추천합니다.
      * @param userId - 사용자 ID (선택)
      * @param numOfRows - 결과 수
@@ -183,6 +280,8 @@ export class JobService {
      */
     async getRecommendedJobs(userId?: number, numOfRows: number = 10) {
         let searchKeyword = '';
+        let categoryIds: number[] = [];
+        let positionIds: number[] = [];
 
         // 사용자 ID가 제공된 경우, 관심 직군/직무를 조회
         if (userId) {
@@ -203,37 +302,49 @@ export class JobService {
             });
 
             if (userInterests) {
-                // 관심 카테고리와 포지션 이름을 조합하여 검색 키워드 생성
-                const categories = userInterests.interestedCategories.map(
-                    (ic) => ic.category.name,
-                );
-                const positions = userInterests.interestedPositions.map(
-                    (ip) => ip.position.name,
-                );
+                categoryIds = userInterests.interestedCategories.map((ic) => ic.categoryId);
+                positionIds = userInterests.interestedPositions.map((ip) => ip.positionId);
 
-                // 우선순위: 포지션(직무) > 카테고리(직군)
-                if (positions.length > 0) {
-                    searchKeyword = positions[0];
-                    this.logger.log(`사용자 ${userId}의 관심 직무에서 추출한 검색 키워드: ${searchKeyword}`);
-                } else if (categories.length > 0) {
-                    searchKeyword = categories[0];
-                    this.logger.log(`사용자 ${userId}의 관심 직군에서 추출한 검색 키워드: ${searchKeyword}`);
-                } else {
-                    this.logger.log(`사용자 ${userId}는 관심 직무/직군이 없습니다.`);
+                const categoryNames = userInterests.interestedCategories.map((ic) => ic.category.name);
+                const positionNames = userInterests.interestedPositions.map((ip) => ip.position.name);
+
+                if (positionNames.length > 0) {
+                    searchKeyword = positionNames.join(', ');
+                    this.logger.log(`사용자 ${userId}의 관심 직무: ${searchKeyword}`);
+                } else if (categoryNames.length > 0) {
+                    searchKeyword = categoryNames.join(', ');
+                    this.logger.log(`사용자 ${userId}의 관심 직군: ${searchKeyword}`);
                 }
             }
         }
 
-        // 공공데이터 API 호출
-        const jobsData = await this.fetchJobsFromDataGoKr({
-            numOfRows,
-            pageNo: 1,
-            searchKeyword,
+        // DB에서 채용공고 조회
+        const whereClause: any = {};
+
+        if (positionIds.length > 0) {
+            whereClause.positionId = { in: positionIds };
+        } else if (categoryIds.length > 0) {
+            whereClause.categoryId = { in: categoryIds };
+        }
+
+        const jobs = await this.prisma.jobPosting.findMany({
+            where: whereClause,
+            take: numOfRows,
+            include: {
+                category: true,
+                position: true,
+            },
+            orderBy: {
+                createdAt: 'desc',
+            },
         });
+
+        this.logger.log(`DB에서 ${jobs.length}개 공고 조회 완료`);
 
         return {
             searchKeyword,
-            jobs: jobsData,
+            totalCount: jobs.length,
+            jobs: jobs,
         };
     }
 

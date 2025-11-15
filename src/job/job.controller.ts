@@ -91,11 +91,25 @@ export class JobController {
         );
     }
 
+    @Post('sync')
+    @AuthNotNeeded()
+    @ApiOperation({
+        summary: '채용공고 데이터 동기화',
+        description: 'Data.go.kr API에서 채용공고를 가져와 DB에 저장합니다.'
+    })
+    @ApiQuery({ name: 'numOfRows', required: false, type: Number, description: '가져올 공고 수 (기본값: 100)' })
+    @ApiResponse({ status: 200, description: '동기화 성공' })
+    @ApiResponse({ status: 500, description: '서버 오류' })
+    async syncJobPostings(@Query('numOfRows') numOfRows?: number) {
+        const rows = numOfRows ? parseInt(numOfRows.toString(), 10) : 100;
+        return await this.jobService.syncJobPostingsFromDataGoKr(rows);
+    }
+
     @Get('recommended')
     @AuthNotNeeded()
     @ApiOperation({
         summary: '직무/직군에 따른 채용공고 추천',
-        description: '사용자의 관심 직군/직무에 따라 공공데이터 포털의 채용공고를 추천합니다. 인증된 사용자의 경우 관심사를 기반으로 검색하고, 비인증 사용자의 경우 전체 공고를 반환합니다.'
+        description: '사용자의 관심 직군/직무에 따라 DB에 저장된 채용공고를 추천합니다. 인증된 사용자의 경우 관심사를 기반으로 필터링하고, 비인증 사용자의 경우 전체 공고를 반환합니다.'
     })
     @ApiQuery({ name: 'numOfRows', required: false, type: Number, description: '결과 수 (기본값: 10)' })
     @ApiResponse({ status: 200, description: '채용공고 추천 성공' })
