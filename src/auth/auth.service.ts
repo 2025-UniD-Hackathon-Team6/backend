@@ -140,12 +140,7 @@ export class AuthService {
         id: userId,
       },
       select: {
-        id: true,
         name: true,
-        interests: true,
-        lastLogin: true,
-        createTime: true,
-        updateTime: true,
       },
     });
 
@@ -153,6 +148,8 @@ export class AuthService {
       throw new NotFoundException('사용자를 찾을 수 없습니다.');
     }
 
-    return user;
+    return {
+      name: user.name,
+    };
   }
 }
