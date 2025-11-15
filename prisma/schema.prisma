@@ -17,10 +17,10 @@ model User {
   id    Int     @id @default(autoincrement())
   name  String  @unique
   password  String
+  interests        String?   // 관심 직군/직무 (쉼표로 구분된 문자열)
   lastLogin        DateTime? @map("last_login")
   createTime       DateTime  @default(now()) @map("create_time")
   updateTime       DateTime  @updatedAt @map("update_time")
-
   jwtToken         JwtToken?
   interestedPostings JobPostingArchive[]
   UserInterestedPosition UserInterestedPosition[]
@@ -34,6 +34,29 @@ model JwtToken {
   userId     Int      @unique @map("user_id")
   accessToken  String? @map("access_token")
   refreshToken  String? @map("refresh_token")
+}
+
+model DailyKeyword {
+  id          Int      @id @default(autoincrement())
+  date        String   @unique // YYYY-MM-DD 형식
+  interest    String   // 직군/직무
+  keyword     String   // 오늘의 키워드
+  description String   // 키워드 설명
+  createTime  DateTime @default(now()) @map("create_time")
+
+  @@map("daily_keyword")
+}
+
+model DailyReport {
+  id          Int      @id @default(autoincrement())
+  date        String   @unique // YYYY-MM-DD 형식
+  interest    String   // 직군/직무
+  title       String   // 리포트 제목
+  summary     String   // 3분 산업 리포트 요약
+  content     String   // 전체 리포트 내용
+  createTime  DateTime @default(now()) @map("create_time")
+
+  @@map("daily_report")
 }
 
 model UserInterestedPosition {
@@ -101,7 +124,7 @@ model JobPosting {
   sourceUrl      String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
-  
+
   archives    JobPostingArchive[]
 
   @@index([categoryId, positionId])

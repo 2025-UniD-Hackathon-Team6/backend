@@ -1,10 +1,11 @@
-import { Body, Controller, Post, Req, Res } from '@nestjs/common';
+import { Body, Controller, Post, Req, Res, Get, Patch } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthNotNeeded, JwtTokens, type AuthenticatedRequest } from '@libs/jwt';
 import { type Response } from 'express';
 import { REFRESH_TOKEN_COOKIE_OPTIONS } from '@libs/constants';
 import { LoginUserDto } from './dto/login-user.dto';
 import { SignUpDto } from './dto/sign-up-user.dto';
+import { UpdateInterestsDto } from './dto/update-interests.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -45,5 +46,21 @@ export class AuthController {
 
     await this.authService.logout(req.user.id);
     res.clearCookie('refresh_token', REFRESH_TOKEN_COOKIE_OPTIONS);
+  }
+
+  @Get('profile')
+  async getProfile(@Req() req: AuthenticatedRequest) {
+    return await this.authService.getProfile(req.user.id);
+  }
+
+  @Patch('interests')
+  async updateInterests(
+    @Req() req: AuthenticatedRequest,
+    @Body() updateInterestsDto: UpdateInterestsDto,
+  ) {
+    return await this.authService.updateInterests(
+      req.user.id,
+      updateInterestsDto.interests,
+    );
   }
 }
