@@ -179,19 +179,13 @@ export class JobService {
      * 사용자의 관심 직군/직무에 따른 채용공고를 추천합니다.
      * @param userId - 사용자 ID (선택)
      * @param numOfRows - 결과 수
-     * @param keyword - 직접 지정한 검색 키워드 (선택)
      * @returns 추천 채용공고 목록
      */
-    async getRecommendedJobs(userId?: number, numOfRows: number = 10, keyword?: string) {
+    async getRecommendedJobs(userId?: number, numOfRows: number = 10) {
         let searchKeyword = '';
 
-        // 1. 직접 입력한 키워드가 있으면 우선 사용
-        if (keyword) {
-            searchKeyword = keyword;
-            this.logger.log(`직접 입력한 검색 키워드: ${searchKeyword}`);
-        }
-        // 2. 사용자 ID가 제공된 경우, 관심 직군/직무를 조회
-        else if (userId) {
+        // 사용자 ID가 제공된 경우, 관심 직군/직무를 조회
+        if (userId) {
             const userInterests = await this.prisma.user.findUnique({
                 where: { id: userId },
                 include: {
@@ -217,14 +211,16 @@ export class JobService {
                     (ip) => ip.position.name,
                 );
 
-                // 첫 번째 관심 항목을 검색 키워드로 사용
+                // 우선순위: 포지션(직무) > 카테고리(직군)
                 if (positions.length > 0) {
                     searchKeyword = positions[0];
+                    this.logger.log(`사용자 ${userId}의 관심 직무에서 추출한 검색 키워드: ${searchKeyword}`);
                 } else if (categories.length > 0) {
                     searchKeyword = categories[0];
+                    this.logger.log(`사용자 ${userId}의 관심 직군에서 추출한 검색 키워드: ${searchKeyword}`);
+                } else {
+                    this.logger.log(`사용자 ${userId}는 관심 직무/직군이 없습니다.`);
                 }
-
-                this.logger.log(`사용자 ${userId}의 검색 키워드: ${searchKeyword}`);
             }
         }
 
