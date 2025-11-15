@@ -26,7 +26,12 @@ import { UpstageModule } from './upstage/upstage.module';
     DailyModule,
     UpstageModule,
   ],
-  controllers: [AppController, JobController, AttendController],
-  providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }, AttendService],
+  controllers: [AppController,
+      JobController,
+      AttendController
+  ],
+  providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard },
+      AttendService
+  ],
 })
 export class AppModule {}

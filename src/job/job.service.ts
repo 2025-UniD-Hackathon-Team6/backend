@@ -1,4 +1,4 @@
-import type { PrismaService } from '@libs/prisma';
+import { PrismaService } from '@libs/prisma';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
