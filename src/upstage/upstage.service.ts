@@ -3,10 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
 
 interface PositionContext {
+  userId: number;
   positionName: string;
   categoryName: string;
   positionDescription?: string | null;
   categoryDescription?: string | null;
+  previousKeywords?: string[];
+  previousReportTitles?: string[];
 }
 
 @Injectable()
@@ -74,6 +77,12 @@ export class UpstageService {
   }> {
     const positionInfo = this.buildPositionContext(context);
 
+    // 이전 키워드 제외 조건 추가
+    let previousKeywordsText = '';
+    if (context.previousKeywords && context.previousKeywords.length > 0) {
+      previousKeywordsText = `\n\n이전에 제공했던 키워드 (중복 금지):\n${context.previousKeywords.join(', ')}`;
+    }
+
     const messages = [
       {
         role: 'system' as const,
@@ -81,9 +90,9 @@ export class UpstageService {
       },
       {
         role: 'user' as const,
-        content: `다음 직무의 취업 준비생을 위한 오늘의 학습 키워드 1개를 추천해주세요.
+        content: `사용자 ID ${context.userId}번 취업 준비생을 위한 오늘의 학습 키워드 1개를 추천해주세요.
 
-${positionInfo}
+${positionInfo}${previousKeywordsText}
 
 응답 형식:
 키워드: [키워드명]
@@ -93,7 +102,8 @@ ${positionInfo}
 1. 현재 ${context.categoryName} 분야의 ${context.positionName} 직무에서 중요한 기술, 개념, 트렌드를 반영
 2. 면접이나 실무에서 자주 언급되는 주제
 3. 하루 만에 기본 개념을 이해할 수 있는 수준의 키워드
-4. 각 사용자에게 매번 다른 키워드를 제공하여 다양한 학습 기회 제공`,
+4. 위에 나열된 이전 키워드와는 완전히 다른 새로운 키워드 제공 (중복 절대 금지)
+5. 사용자 ID를 고려하여 개인화된 키워드 추천`,
       },
     ];
 
@@ -121,6 +131,12 @@ ${positionInfo}
   }> {
     const positionInfo = this.buildPositionContext(context);
 
+    // 이전 리포트 제목 제외 조건 추가
+    let previousReportsText = '';
+    if (context.previousReportTitles && context.previousReportTitles.length > 0) {
+      previousReportsText = `\n\n이전에 제공했던 리포트 주제 (중복 금지):\n${context.previousReportTitles.join('\n- ')}`;
+    }
+
     const messages = [
       {
         role: 'system' as const,
@@ -128,9 +144,9 @@ ${positionInfo}
       },
       {
         role: 'user' as const,
-        content: `다음 직무를 준비하는 취업 준비생을 위한 오늘의 3분 산업 리포트를 작성해주세요.
+        content: `사용자 ID ${context.userId}번 취업 준비생을 위한 오늘의 3분 산업 리포트를 작성해주세요.
 
-${positionInfo}
+${positionInfo}${previousReportsText}
 
 응답 형식:
 제목: [리포트 제목]
@@ -143,7 +159,8 @@ ${positionInfo}
 3. 취업 준비생이 알아야 할 핵심 정보 포함
 4. 3분 안에 읽을 수 있는 분량 (500-800자)
 5. 실무에 도움이 되는 인사이트 제공
-6. 각 사용자에게 다양한 관점의 리포트를 제공`,
+6. 위에 나열된 이전 리포트와는 완전히 다른 새로운 주제와 관점 제공 (중복 절대 금지)
+7. 사용자 ID를 고려하여 개인화된 리포트 작성`,
       },
     ];
 
