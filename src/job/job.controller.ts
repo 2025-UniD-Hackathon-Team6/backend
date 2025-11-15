@@ -27,9 +27,10 @@ export class JobController {
 
     @Post('categories/interest')
     @ApiBearerAuth('access-token')
-    @ApiOperation({ summary: '관심 카테고리 추가', description: '사용자의 관심 카테고리를 추가합니다.' })
+    @ApiOperation({ summary: '관심 카테고리 추가', description: '사용자의 관심 카테고리를 여러 개 추가합니다.' })
     @ApiBody({ type: InterestIds })
     @ApiResponse({ status: 201, description: '관심 카테고리 추가 성공' })
+    @ApiResponse({ status: 422, description: '잘못된 아이디' })
     @ApiResponse({ status: 401, description: '인증 실패' })
     async addInterestedCategories(
         @Req() req: AuthenticatedRequest,
@@ -43,9 +44,10 @@ export class JobController {
 
     @Post('positions/interest')
     @ApiBearerAuth('access-token')
-    @ApiOperation({ summary: '관심 포지션 추가', description: '사용자의 관심 포지션을 추가합니다.' })
+    @ApiOperation({ summary: '관심 포지션 추가', description: '사용자의 관심 포지션을 여러 개 추가합니다.' })
     @ApiBody({ type: InterestIds })
     @ApiResponse({ status: 201, description: '관심 포지션 추가 성공' })
+    @ApiResponse({ status: 422, description: '잘못된 아이디' })
     @ApiResponse({ status: 401, description: '인증 실패' })
     async addInterestedPositions(
         @Req() req: AuthenticatedRequest,
@@ -59,7 +61,7 @@ export class JobController {
 
     @Delete('categories/interest')
     @ApiBearerAuth('access-token')
-    @ApiOperation({ summary: '관심 카테고리 삭제', description: '사용자의 관심 카테고리를 삭제합니다.' })
+    @ApiOperation({ summary: '관심 카테고리 삭제', description: '사용자의 관심 카테고리를 여러 개 삭제합니다.' })
     @ApiBody({ type: InterestIds })
     @ApiResponse({ status: 200, description: '관심 카테고리 삭제 성공' })
     @ApiResponse({ status: 401, description: '인증 실패' })
@@ -75,7 +77,7 @@ export class JobController {
 
     @Delete('positions/interest')
     @ApiBearerAuth('access-token')
-    @ApiOperation({ summary: '관심 포지션 삭제', description: '사용자의 관심 포지션을 삭제합니다.' })
+    @ApiOperation({ summary: '관심 포지션 삭제', description: '사용자의 관심 포지션을 여러 개 삭제합니다.' })
     @ApiBody({ type: InterestIds })
     @ApiResponse({ status: 200, description: '관심 포지션 삭제 성공' })
     @ApiResponse({ status: 401, description: '인증 실패' })
