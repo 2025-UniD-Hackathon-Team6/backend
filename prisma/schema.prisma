@@ -13,6 +13,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Job {
+model User {
   id    Int     @id @default(autoincrement())
+  name  String  @unique
+  password  String
+  lastLogin        DateTime? @map("last_login")
+  createTime       DateTime  @default(now()) @map("create_time")
+  updateTime       DateTime  @updatedAt @map("update_time")
+  jwtToken         JwtToken?
+
+  @@map("user")
+}
+
+model JwtToken {
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId     Int      @unique @map("user_id")
+  accessToken  String? @map("access_token")
+  refreshToken  String? @map("refresh_token")
 }

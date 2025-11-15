@@ -23,6 +23,8 @@
     "noFallthroughCasesInSwitch": false,
     "paths": {
       "@libs/prisma": ["./libs/prisma/src/index"],
+      "@libs/jwt": ["./libs/jwt/src/index"],
+      "@libs/constants": ["./libs/constants/src/index"],
     }
   }
 }

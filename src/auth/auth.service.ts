@@ -1,11 +1,102 @@
+import { JwtAuthService, JwtPayload } from '@libs/jwt';
 import { PrismaService } from '@libs/prisma';
-import { Injectable } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+import { LoginUserDto } from './dto/login-user.dto';
+import { SignUpDto } from './dto/sign-up-user.dto';
+import { hash } from 'argon2';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+    private readonly jwtAuthService: JwtAuthService,
+  ) {}
 
-  async Test() {
-    return await this.prisma.job.findMany();
+  async createJwtTokens(userId: number, username: string) {
+    const payload: JwtPayload = { userId, username };
+    const accessToken = await this.jwtService.signAsync(payload, {
+      expiresIn: 30 * 60,
+    });
+    const refreshToken = await this.jwtService.signAsync(payload, {
+      expiresIn: 60 * 60 * 24,
+    });
+
+    await this.prisma.jwtToken.upsert({
+      where: {
+        userId,
+      },
+      update: {
+        userId,
+        accessToken,
+        refreshToken,
+      },
+      create: {
+        userId,
+        accessToken,
+        refreshToken,
+      },
+    });
+
+    return { accessToken, refreshToken };
+  }
+
+  async register(signUpDto: SignUpDto) {
+    const encryptedPassword = await hash(signUpDto.password, {
+      timeCost: 2,
+      memoryCost: 2 ** 11,
+      parallelism: 1,
+    });
+    return await this.prisma.user.create({
+      data: {
+        name: signUpDto.name,
+        password: encryptedPassword,
+      },
+    });
+  }
+
+  async login(loginUserDto: LoginUserDto) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        name: loginUserDto.name,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('user name is not registered');
+    }
+
+    const isValidUser = await this.jwtAuthService.isValidUser(
+      user,
+      loginUserDto.password,
+    );
+    if (!isValidUser) {
+      throw new ForbiddenException('wrong password');
+    }
+
+    await this.prisma.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        lastLogin: new Date(),
+      },
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+    return await this.createJwtTokens(user.id, user.name);
+  }
+
+  async logout(userId: number) {
+    return await this.prisma.jwtToken.delete({
+      where: {
+        userId,
+      },
+    });
   }
 }
