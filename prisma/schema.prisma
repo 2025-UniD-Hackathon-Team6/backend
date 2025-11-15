@@ -20,7 +20,11 @@ model User {
   lastLogin        DateTime? @map("last_login")
   createTime       DateTime  @default(now()) @map("create_time")
   updateTime       DateTime  @updatedAt @map("update_time")
+
   jwtToken         JwtToken?
+  interestedPostings JobPostingArchive[]
+  UserInterestedPosition UserInterestedPosition[]
+  UserInterestedCategory UserInterestedCategory[]
 
   @@map("user")
 }
@@ -30,4 +34,100 @@ model JwtToken {
   userId     Int      @unique @map("user_id")
   accessToken  String? @map("access_token")
   refreshToken  String? @map("refresh_token")
+}
+
+model UserInterestedPosition {
+  id            Int      @id @default(autoincrement())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        Int      @unique @map("user_id")
+  positionId    Int
+  position      JobPosition     @relation(fields: [positionId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime @default(now())
+
+  @@map("user_interested_position")
+}
+
+model UserInterestedCategory {
+  id            Int      @id @default(autoincrement())
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId        Int      @unique @map("user_id")
+  categoryId    Int
+  category      JobCategory     @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  createdAt     DateTime @default(now())
+
+  @@map("user_interested_category")
+}
+
+model JobCategory {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+
+  positions      JobPosition[]
+  userInterests  UserInterestedCategory[]
+  jobPostings    JobPosting[]
+
+  @@map("job_category")
+}
+
+model JobPosition {
+  id          Int      @id @default(autoincrement())
+  categoryId  Int
+  category    JobCategory    @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name        String
+  description String?
+
+  userInterests UserInterestedPosition[]
+  jobPostings   JobPosting[]
+
+  @@unique([categoryId, name])
+  @@map("job_position")
+}
+
+model JobPosting {
+  id             Int      @id @default(autoincrement())
+  category    JobCategory  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId     Int
+  position    JobPosition  @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  positionId     Int
+  companyName    String
+  title          String
+  description    String
+  location       String?
+  employmentType String?
+  deadline       DateTime?
+  sourceUrl      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  archives    JobPostingArchive[]
+
+  @@index([categoryId, positionId])
+  @@index([deadline])
+  @@map("job_posting")
+}
+
+enum JobInterestType {
+  High
+  Middle
+  Low
+}
+
+model JobPostingArchive {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  postingId  Int
+  status     JobInterestType   @default(Middle)
+  userNote   String?
+  archivedAt DateTime @default(now())
+
+  // Relations
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  posting    JobPosting @relation(fields: [postingId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postingId])
+  @@index([userId])
+  @@map("job_archives")
 }
