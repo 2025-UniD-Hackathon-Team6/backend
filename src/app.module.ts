@@ -14,6 +14,7 @@ import { AttendService } from './attend/attend.service';
 import { AttendModule } from './attend/attend.module';
 import { DailyModule } from './daily/daily.module';
 import { UpstageModule } from './upstage/upstage.module';
+import { JobService } from './job/job.service';
 
 @Module({
   imports: [
@@ -26,7 +27,13 @@ import { UpstageModule } from './upstage/upstage.module';
     DailyModule,
     UpstageModule,
   ],
-  controllers: [AppController, JobController, AttendController],
-  providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }, AttendService],
+  controllers: [AppController,
+      JobController,
+      AttendController
+  ],
+  providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard },
+      AttendService,
+      JobService
+  ],
 })
 export class AppModule {}
