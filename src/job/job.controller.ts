@@ -1,6 +1,7 @@
-import { Controller, Delete, Get, Post } from '@nestjs/common';
-import type { JobService } from './job.service';
-import { AuthNotNeeded } from '@libs/jwt';
+import { Body, Controller, Delete, Get, Post, Req } from '@nestjs/common';
+import { JobService } from './job.service';
+import { AuthNotNeeded, type AuthenticatedRequest } from '@libs/jwt';
+import { InterestIds } from './dto/interest-ids.dto';
 
 @Controller('job')
 export class JobController {
@@ -19,22 +20,46 @@ export class JobController {
     }
 
     @Post('categories/interest')
-    async addInterestedCategories() {
-        return await this.jobService.addInterestedCategories();
+    async addInterestedCategories(
+        @Req() req: AuthenticatedRequest,
+        @Body() categoryIds: InterestIds,
+    ) {
+        return await this.jobService.addInterestedCategories(
+            req.user.id,
+            categoryIds.Ids
+        );
     }
 
     @Post('positions/interest')
-    async addInterestedPositions() {
-        return await this.jobService.addInterestedPositions();
+    async addInterestedPositions(
+        @Req() req: AuthenticatedRequest,
+        @Body() positionIds: InterestIds,
+    ) {
+        return await this.jobService.addInterestedPositions(
+            req.user.id,
+            positionIds.Ids
+        );
     }
 
     @Delete('categories/interest')
-    async deleteInterestedCategories() {
-        return await this.jobService.deleteInterestedCategories();
+    async deleteInterestedCategories(
+        @Req() req: AuthenticatedRequest,
+        @Body() categoryIds: InterestIds,
+    ) {
+        return await this.jobService.deleteInterestedCategories(
+            req.user.id,
+            categoryIds.Ids
+        );
     }
 
     @Delete('positions/interest')
-    async deleteInterestedPositions() {
-        return await this.jobService.deleteInterestedPositions();
+    async deleteInterestedPositions(
+        @Req() req: AuthenticatedRequest,
+        @Body() positionIds: InterestIds,
+    ) {
+        return await this.jobService.deleteInterestedPositions(
+            req.user.id,
+            positionIds.Ids
+        );
     }
 }

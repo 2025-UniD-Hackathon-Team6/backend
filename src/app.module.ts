@@ -11,10 +11,11 @@ import { JobModule } from './job/job.module';
 import { AttendController } from './attend/attend.controller';
 import { AttendService } from './attend/attend.service';
 import { AttendModule } from './attend/attend.module';
+import { JobService } from './job/job.service';
 
 @Module({
   imports: [AuthModule, PrismaModule, JwtAuthModule, JobModule, AttendModule],
   controllers: [AppController, JobController, AttendController],
-  providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }, AttendService],
+  providers: [AppService, { provide: APP_GUARD, useClass: JwtAuthGuard }, AttendService, JobService],
 })
 export class AppModule {}
