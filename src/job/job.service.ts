@@ -182,7 +182,7 @@ export class JobService {
      * @returns 추천 채용공고 목록
      */
     async getRecommendedJobs(userId?: number, numOfRows: number = 10) {
-        let searchKeyword = '';
+        let searchKeyword = '개발';
 
         // 사용자 ID가 제공된 경우, 관심 직군/직무를 조회
         if (userId) {
