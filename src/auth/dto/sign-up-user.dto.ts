@@ -1,4 +1,4 @@
-import { IsAlphanumeric, IsNotEmpty, IsString, Matches } from 'class-validator';
+import { IsAlphanumeric, IsNotEmpty, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class SignUpDto {
@@ -17,12 +17,4 @@ export class SignUpDto {
   @IsString()
   @IsNotEmpty()
   readonly password: string;
-
-  @ApiProperty({
-    description: '실제 이름 (한글, 영문, 공백만 가능)',
-    example: '홍길동',
-  })
-  @Matches(/^[가-힣a-zA-Z \s]+$/)
-  @IsNotEmpty()
-  readonly realName: string;
 }
