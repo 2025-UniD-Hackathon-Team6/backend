@@ -1,0 +1,4 @@
+-- CreateTable
+CREATE TABLE "Job" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT
+);
