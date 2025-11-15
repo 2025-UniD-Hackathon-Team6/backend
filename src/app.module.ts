@@ -15,6 +15,7 @@ import { AttendModule } from './attend/attend.module';
 import { DailyModule } from './daily/daily.module';
 import { UpstageModule } from './upstage/upstage.module';
 import { JobService } from './job/job.service';
+import { CommunityModule } from './community/community.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { JobService } from './job/job.service';
     AttendModule,
     DailyModule,
     UpstageModule,
+    CommunityModule,
   ],
   controllers: [AppController,
       JobController,
