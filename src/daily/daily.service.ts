@@ -64,10 +64,11 @@ export class DailyService {
       );
 
       const generated = await this.upstage.generateDailyKeyword({
-        positionName: position.name,
+          positionName: position.name,
         categoryName: category.name,
         positionDescription: position.description,
         categoryDescription: category.description,
+
       });
 
       dailyKeyword = await this.prisma.dailyKeyword.create({
