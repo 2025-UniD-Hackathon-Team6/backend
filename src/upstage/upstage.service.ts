@@ -2,6 +2,13 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import OpenAI from 'openai';
 
+interface PositionContext {
+  positionName: string;
+  categoryName: string;
+  positionDescription?: string | null;
+  categoryDescription?: string | null;
+}
+
 @Injectable()
 export class UpstageService {
   private readonly logger = new Logger(UpstageService.name);
@@ -40,14 +47,33 @@ export class UpstageService {
   }
 
   /**
-   * 특정 직군/직무에 대한 오늘의 키워드를 생성합니다.
-   * @param interest - 관심 직군/직무
+   * Position 정보를 기반으로 컨텍스트 문자열을 생성합니다.
+   */
+  private buildPositionContext(context: PositionContext): string {
+    let ctx = `${context.categoryName} 분야의 ${context.positionName} 직무`;
+
+    if (context.positionDescription) {
+      ctx += `\n직무 설명: ${context.positionDescription}`;
+    }
+
+    if (context.categoryDescription) {
+      ctx += `\n분야 설명: ${context.categoryDescription}`;
+    }
+
+    return ctx;
+  }
+
+  /**
+   * 특정 직무에 대한 오늘의 키워드를 생성합니다.
+   * @param context - Position 및 Category 정보
    * @returns 키워드 및 설명
    */
-  async generateDailyKeyword(interest: string): Promise<{
+  async generateDailyKeyword(context: PositionContext): Promise<{
     keyword: string;
     description: string;
   }> {
+    const positionInfo = this.buildPositionContext(context);
+
     const messages = [
       {
         role: 'system' as const,
@@ -55,16 +81,19 @@ export class UpstageService {
       },
       {
         role: 'user' as const,
-        content: `${interest} 직군/직무의 취업 준비생을 위한 오늘의 학습 키워드 1개를 추천해주세요.
+        content: `다음 직무의 취업 준비생을 위한 오늘의 학습 키워드 1개를 추천해주세요.
+
+${positionInfo}
 
 응답 형식:
 키워드: [키워드명]
 설명: [키워드에 대한 간단한 설명 (2-3문장)]
 
 요구사항:
-1. 현재 ${interest} 분야에서 중요한 기술, 개념, 트렌드를 반영
+1. 현재 ${context.categoryName} 분야의 ${context.positionName} 직무에서 중요한 기술, 개념, 트렌드를 반영
 2. 면접이나 실무에서 자주 언급되는 주제
-3. 하루 만에 기본 개념을 이해할 수 있는 수준의 키워드`,
+3. 하루 만에 기본 개념을 이해할 수 있는 수준의 키워드
+4. 각 사용자에게 매번 다른 키워드를 제공하여 다양한 학습 기회 제공`,
       },
     ];
 
@@ -81,15 +110,17 @@ export class UpstageService {
   }
 
   /**
-   * 특정 직군/직무에 대한 3분 산업 리포트를 생성합니다.
-   * @param interest - 관심 직군/직무
+   * 특정 직무에 대한 3분 산업 리포트를 생성합니다.
+   * @param context - Position 및 Category 정보
    * @returns 리포트 제목, 요약, 전체 내용
    */
-  async generateDailyReport(interest: string): Promise<{
+  async generateDailyReport(context: PositionContext): Promise<{
     title: string;
     summary: string;
     content: string;
   }> {
+    const positionInfo = this.buildPositionContext(context);
+
     const messages = [
       {
         role: 'system' as const,
@@ -97,7 +128,9 @@ export class UpstageService {
       },
       {
         role: 'user' as const,
-        content: `${interest} 직군/직무를 준비하는 취업 준비생을 위한 오늘의 3분 산업 리포트를 작성해주세요.
+        content: `다음 직무를 준비하는 취업 준비생을 위한 오늘의 3분 산업 리포트를 작성해주세요.
+
+${positionInfo}
 
 응답 형식:
 제목: [리포트 제목]
@@ -105,10 +138,12 @@ export class UpstageService {
 내용: [상세 리포트 내용]
 
 요구사항:
-1. ${interest} 분야의 최신 트렌드, 기술 동향, 시장 변화를 반영
-2. 취업 준비생이 알아야 할 핵심 정보 포함
-3. 3분 안에 읽을 수 있는 분량 (500-800자)
-4. 실무에 도움이 되는 인사이트 제공`,
+1. ${context.categoryName} 분야의 최신 트렌드, 기술 동향, 시장 변화를 반영
+2. ${context.positionName} 직무에 특화된 정보 포함
+3. 취업 준비생이 알아야 할 핵심 정보 포함
+4. 3분 안에 읽을 수 있는 분량 (500-800자)
+5. 실무에 도움이 되는 인사이트 제공
+6. 각 사용자에게 다양한 관점의 리포트를 제공`,
       },
     ];
 
@@ -120,7 +155,9 @@ export class UpstageService {
     const contentMatch = response.match(/내용:\s*(.+)/s);
 
     return {
-      title: titleMatch ? titleMatch[1].trim() : `${interest} 산업 리포트`,
+      title: titleMatch
+        ? titleMatch[1].trim()
+        : `${context.categoryName} - ${context.positionName} 산업 리포트`,
       summary: summaryMatch ? summaryMatch[1].trim() : response.substring(0, 200),
       content: contentMatch ? contentMatch[1].trim() : response,
     };

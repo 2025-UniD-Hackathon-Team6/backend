@@ -17,7 +17,7 @@ model User {
   id    Int     @id @default(autoincrement())
   name  String  @unique
   password  String
-  interests        String?   // 관심 직군/직무 (쉼표로 구분된 문자열)
+  interests        String?   // 관심 직군/직무 (쉼표로 구분된 문자열) - deprecated, UserInterestedPosition 사용 권장
   lastLogin        DateTime? @map("last_login")
   createTime       DateTime  @default(now()) @map("create_time")
   updateTime       DateTime  @updatedAt @map("update_time")
@@ -26,6 +26,8 @@ model User {
   UserInterestedPosition UserInterestedPosition[]
   UserInterestedCategory UserInterestedCategory[]
   DailyAttendance DailyAttendance[]
+  dailyKeywords    DailyKeyword[]
+  dailyReports     DailyReport[]
 
   @@map("user")
 }
@@ -38,25 +40,35 @@ model JwtToken {
 }
 
 model DailyKeyword {
-  id          Int      @id @default(autoincrement())
-  date        String   @unique // YYYY-MM-DD 형식
-  interest    String   // 직군/직무
-  keyword     String   // 오늘의 키워드
-  description String   // 키워드 설명
-  createTime  DateTime @default(now()) @map("create_time")
+  id          Int         @id @default(autoincrement())
+  date        String      // YYYY-MM-DD 형식
+  userId      Int         @map("user_id")
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  positionId  Int         @map("position_id")
+  position    JobPosition @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  keyword     String      // 오늘의 키워드
+  description String      // 키워드 설명
+  createTime  DateTime    @default(now()) @map("create_time")
 
+  @@unique([date, userId])
+  @@index([positionId])
   @@map("daily_keyword")
 }
 
 model DailyReport {
-  id          Int      @id @default(autoincrement())
-  date        String   @unique // YYYY-MM-DD 형식
-  interest    String   // 직군/직무
-  title       String   // 리포트 제목
-  summary     String   // 3분 산업 리포트 요약
-  content     String   // 전체 리포트 내용
-  createTime  DateTime @default(now()) @map("create_time")
+  id          Int         @id @default(autoincrement())
+  date        String      // YYYY-MM-DD 형식
+  userId      Int         @map("user_id")
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  positionId  Int         @map("position_id")
+  position    JobPosition @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  title       String      // 리포트 제목
+  summary     String      // 3분 산업 리포트 요약
+  content     String      // 전체 리포트 내용
+  createTime  DateTime    @default(now()) @map("create_time")
 
+  @@unique([date, userId])
+  @@index([positionId])
   @@map("daily_report")
 }
 
@@ -105,6 +117,8 @@ model JobPosition {
 
   userInterests UserInterestedPosition[]
   jobPostings   JobPosting[]
+  dailyKeywords DailyKeyword[]
+  dailyReports  DailyReport[]
 
   @@unique([categoryId, name])
   @@map("job_position")
