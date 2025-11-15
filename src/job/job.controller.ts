@@ -1,8 +1,8 @@
-import { Body, Controller, Delete, Get, Post, Req } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Post, Req, Query } from '@nestjs/common';
 import { JobService } from './job.service';
 import { AuthNotNeeded, type AuthenticatedRequest } from '@libs/jwt';
 import { InterestIds } from './dto/interest-ids.dto';
-import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
 @ApiTags('채용')
 @Controller('job')
@@ -89,5 +89,24 @@ export class JobController {
             req.user.id,
             positionIds.Ids
         );
+    }
+
+    @Get('recommended')
+    @AuthNotNeeded()
+    @ApiOperation({
+        summary: '직무/직군에 따른 채용공고 추천',
+        description: '사용자의 관심 직군/직무에 따라 공공데이터 포털의 채용공고를 추천합니다. 인증된 사용자의 경우 관심사를 기반으로 검색하고, 비인증 사용자의 경우 전체 공고를 반환합니다.'
+    })
+    @ApiQuery({ name: 'numOfRows', required: false, type: Number, description: '결과 수 (기본값: 10)' })
+    @ApiResponse({ status: 200, description: '채용공고 추천 성공' })
+    @ApiResponse({ status: 500, description: '서버 오류' })
+    async getRecommendedJobs(
+        @Req() req: AuthenticatedRequest,
+        @Query('numOfRows') numOfRows?: number,
+    ) {
+        const userId = req.user?.id; // 인증된 경우에만 userId가 있음
+        const rows = numOfRows ? parseInt(numOfRows.toString(), 10) : 10;
+
+        return await this.jobService.getRecommendedJobs(userId, rows);
     }
 }
