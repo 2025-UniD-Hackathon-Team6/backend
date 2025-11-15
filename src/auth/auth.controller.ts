@@ -27,8 +27,8 @@ export class AuthController {
   @ApiOperation({ summary: '회원가입', description: '새로운 사용자를 등록합니다.' })
   @ApiBody({ type: SignUpDto })
   @ApiResponse({ status: 201, description: '회원가입 성공' })
-  @ApiResponse({ status: 400, description: '잘못된 요청' })
-  @ApiResponse({ status: 409, description: '이미 존재하는 사용자' })
+  @ApiResponse({ status: 406, description: '잘못된 아이디 / 패스워드' })
+  @ApiResponse({ status: 400, description: '이미 존재하는 사용자' })
   async register(@Body() signUpDto: SignUpDto) {
     return await this.authService.register(signUpDto);
   }
@@ -38,7 +38,8 @@ export class AuthController {
   @ApiOperation({ summary: '로그인', description: '사용자 로그인을 수행합니다.' })
   @ApiBody({ type: LoginUserDto })
   @ApiResponse({ status: 200, description: '로그인 성공. Authorization 헤더와 refresh_token 쿠키가 설정됩니다.' })
-  @ApiResponse({ status: 401, description: '인증 실패' })
+  @ApiResponse({ status: 404, description: '존재하지 않는 사용자' })
+  @ApiResponse({ status: 403, description: '비밀번호 불일치' })
   async login(
     @Body() loginUserDto: LoginUserDto,
     @Res({ passthrough: true }) res: Response,
@@ -52,7 +53,6 @@ export class AuthController {
   @ApiCookieAuth('refresh_token')
   @ApiOperation({ summary: '로그아웃', description: '사용자 로그아웃을 수행합니다.' })
   @ApiResponse({ status: 200, description: '로그아웃 성공' })
-  @ApiResponse({ status: 401, description: '인증 실패' })
   async logout(
     @Req() req: AuthenticatedRequest,
     @Res({ passthrough: true }) res: Response,
@@ -68,7 +68,7 @@ export class AuthController {
   @ApiBearerAuth('access-token')
   @ApiOperation({ summary: '프로필 조회', description: '현재 로그인한 사용자의 프로필을 조회합니다.' })
   @ApiResponse({ status: 200, description: '프로필 조회 성공' })
-  @ApiResponse({ status: 401, description: '인증 실패' })
+  @ApiResponse({ status: 404, description: '존재하지 않는 사용자' })
   async getProfile(@Req() req: AuthenticatedRequest) {
     return await this.authService.getProfile(req.user.id);
   }

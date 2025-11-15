@@ -1,8 +1,10 @@
 import { JwtAuthService, JwtPayload } from '@libs/jwt';
 import { PrismaService } from '@libs/prisma';
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
+  NotAcceptableException,
   NotFoundException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -47,6 +49,20 @@ export class AuthService {
   }
 
   async register(signUpDto: SignUpDto) {
+    if(signUpDto.name.length == 0 || signUpDto.password.length == 0){
+      throw new NotAcceptableException('name or password is empty');
+    }
+
+    const user = await this.prisma.user.findUnique({
+      where: {
+        name: signUpDto.name
+      }
+    })
+
+    if (user) {
+      throw new BadRequestException('already exist')
+    }
+
     const encryptedPassword = await hash(signUpDto.password, {
       timeCost: 2,
       memoryCost: 2 ** 11,
