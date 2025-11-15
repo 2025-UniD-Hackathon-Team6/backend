@@ -1,9 +1,27 @@
 import { PrismaService } from '@libs/prisma';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotAcceptableException } from '@nestjs/common';
+import type { DailyAttendDto } from './dto/daily-attend.dto';
 
 @Injectable()
 export class AttendService {
     constructor(private readonly prisma: PrismaService) {}
+
+    async attend(
+        userId: number,
+        dailyAttendDto : DailyAttendDto
+    ) {
+        const todayCheck = await this.checkTodayAttendance(userId);
+        if (todayCheck) {
+            throw new NotAcceptableException('already recorded')
+        }
+
+        return await this.prisma.dailyAttendance.create({
+            data: {
+                userId,
+                ...dailyAttendDto
+            }
+        })
+    }
 
     async checkTodayAttendance(userId: number){
         const today = new Date();
