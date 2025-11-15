@@ -99,4 +99,44 @@ export class AuthService {
       },
     });
   }
+
+  async updateInterests(userId: number, interests: string) {
+    return await this.prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        interests,
+      },
+      select: {
+        id: true,
+        name: true,
+        interests: true,
+        createTime: true,
+        updateTime: true,
+      },
+    });
+  }
+
+  async getProfile(userId: number) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        id: true,
+        name: true,
+        interests: true,
+        lastLogin: true,
+        createTime: true,
+        updateTime: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다.');
+    }
+
+    return user;
+  }
 }
