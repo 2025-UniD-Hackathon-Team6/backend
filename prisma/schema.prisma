@@ -183,6 +183,8 @@ model DailyAttendance {
   userId      Int
   checkinDate DateTime @default(now())
   stressLevel StressLevel
+  mood        String?
+  note        String?
 
   // Relations
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
