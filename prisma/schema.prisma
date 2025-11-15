@@ -25,6 +25,7 @@ model User {
   interestedPostings JobPostingArchive[]
   UserInterestedPosition UserInterestedPosition[]
   UserInterestedCategory UserInterestedCategory[]
+  DailyAttendance DailyAttendance[]
 
   @@map("user")
 }
@@ -130,4 +131,28 @@ model JobPostingArchive {
   @@unique([userId, postingId])
   @@index([userId])
   @@map("job_archives")
+}
+
+enum StressLevel {
+  ExtremelyHigh
+  High
+  Middle
+  Low
+  ExtremelyLow
+}
+
+model DailyAttendance {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  checkinDate DateTime @default(now())
+  stressLevel StressLevel
+  mood        String?
+  note        String?
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, checkinDate])
+  @@index([userId])
+  @@map("daily_attendance")
 }
