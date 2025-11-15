@@ -26,17 +26,15 @@ export class AttendService {
     }
 
     async checkMothlyAttendance(userId: number){
-        const month = new Date();
-        month.setMonth(0, 0); // 오늘 0시 0분 0초
-
-        const tomorrow = new Date(month);
-        tomorrow.setDate(tomorrow.getMonth() + 1);
-        return await this.prisma.dailyAttendance.findFirst({
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        return await this.prisma.dailyAttendance.findMany({
             where: {
                 userId,
                 checkinDate: {
-                    gte: today,
-                    lt: tomorrow
+                    gte: startOfMonth,
+                    lt: startOfNextMonth
                 }
             },
             orderBy: {
