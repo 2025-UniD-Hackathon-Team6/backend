@@ -20,6 +20,7 @@ export class AuthController {
       jwtTokens.refreshToken,
       REFRESH_TOKEN_COOKIE_OPTIONS,
     );
+    res.send(jwtTokens);
   };
 
   @AuthNotNeeded()

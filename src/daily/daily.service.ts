@@ -63,11 +63,30 @@ export class DailyService {
         `Generating new daily keyword for user ${userId}, position: ${position.name} (${category.name}) on ${today}`,
       );
 
+      // 이전 키워드 목록 조회 (최근 30개)
+      const previousKeywords = await this.prisma.dailyKeyword.findMany({
+        where: {
+          userId,
+          date: {
+            lt: today, // 오늘 이전의 키워드만
+          },
+        },
+        orderBy: {
+          date: 'desc',
+        },
+        take: 30,
+        select: {
+          keyword: true,
+        },
+      });
+
       const generated = await this.upstage.generateDailyKeyword({
+        userId,
         positionName: position.name,
         categoryName: category.name,
         positionDescription: position.description,
         categoryDescription: category.description,
+        previousKeywords: previousKeywords.map((k) => k.keyword),
       });
 
       dailyKeyword = await this.prisma.dailyKeyword.create({
@@ -152,11 +171,30 @@ export class DailyService {
         `Generating new daily report for user ${userId}, position: ${position.name} (${category.name}) on ${today}`,
       );
 
+      // 이전 리포트 제목 목록 조회 (최근 30개)
+      const previousReports = await this.prisma.dailyReport.findMany({
+        where: {
+          userId,
+          date: {
+            lt: today, // 오늘 이전의 리포트만
+          },
+        },
+        orderBy: {
+          date: 'desc',
+        },
+        take: 30,
+        select: {
+          title: true,
+        },
+      });
+
       const generated = await this.upstage.generateDailyReport({
+        userId,
         positionName: position.name,
         categoryName: category.name,
         positionDescription: position.description,
         categoryDescription: category.description,
+        previousReports: previousReports.map((r) => r.title),
       });
 
       dailyReport = await this.prisma.dailyReport.create({

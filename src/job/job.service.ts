@@ -34,10 +34,10 @@ export class JobService {
                 userId
             },
             select: {
-                id: true
+                categoryId: true  // ✅ id 대신 categoryId
             }
         })
-        const previousIds = previous.map((p) => p.id)
+        const previousIds = previous.map((p) => p.categoryId)  // ✅ 수정
 
         return await this.prisma.userInterestedCategory.createManyAndReturn({
             data: categoryIds
@@ -72,10 +72,10 @@ export class JobService {
                 userId
             },
             select: {
-                id: true
+                positionId: true  // ✅ id 대신 positionId
             }
         })
-        const previousIds = previous.map((p) => p.id)
+        const previousIds = previous.map((p) => p.positionId)  // ✅ 수정
 
         return await this.prisma.userInterestedPosition.createManyAndReturn({
             data: positionIds
@@ -118,20 +118,19 @@ export class JobService {
      * @returns 추천 채용공고 목록
      */
     async getRecommendedJobs(userId?: number, numOfRows: number = 10) {
-        let categoryIds: number[] = [];
-        let positionIds: number[] = [];
+        let searchKeyword = '개발';
 
         // 사용자 ID가 제공된 경우, 관심 직군/직무를 조회
         if (userId) {
             const userInterests = await this.prisma.user.findUnique({
                 where: { id: userId },
                 include: {
-                    interestedCategories: {
+                    UserInterestedCategory: {  // ✅ 수정
                         include: {
                             category: true,
                         },
                     },
-                    interestedPositions: {
+                    UserInterestedPosition: {  // ✅ 수정
                         include: {
                             position: true,
                         },
@@ -140,8 +139,24 @@ export class JobService {
             });
 
             if (userInterests) {
-                categoryIds = userInterests.interestedCategories.map((ic) => ic.categoryId);
-                positionIds = userInterests.interestedPositions.map((ip) => ip.positionId);
+                // 관심 카테고리와 포지션 이름을 조합하여 검색 키워드 생성
+                const categories = userInterests.UserInterestedCategory.map(  // ✅ 수정
+                    (ic) => ic.category.name,
+                );
+                const positions = userInterests.UserInterestedPosition.map(  // ✅ 수정
+                    (ip) => ip.position.name,
+                );
+
+                // 우선순위: 포지션(직무) > 카테고리(직군)
+                if (positions.length > 0) {
+                    searchKeyword = positions[0];
+                    this.logger.log(`사용자 ${userId}의 관심 직무에서 추출한 검색 키워드: ${searchKeyword}`);
+                } else if (categories.length > 0) {
+                    searchKeyword = categories[0];
+                    this.logger.log(`사용자 ${userId}의 관심 직군에서 추출한 검색 키워드: ${searchKeyword}`);
+                } else {
+                    this.logger.log(`사용자 ${userId}는 관심 직무/직군이 없습니다.`);
+                }
             }
         }
 
@@ -171,5 +186,4 @@ export class JobService {
             jobs: jobs,
         };
     }
-
 }
