@@ -211,14 +211,16 @@ export class JobService {
                     (ip) => ip.position.name,
                 );
 
-                // 첫 번째 관심 항목을 검색 키워드로 사용
+                // 우선순위: 포지션(직무) > 카테고리(직군)
                 if (positions.length > 0) {
                     searchKeyword = positions[0];
+                    this.logger.log(`사용자 ${userId}의 관심 직무에서 추출한 검색 키워드: ${searchKeyword}`);
                 } else if (categories.length > 0) {
                     searchKeyword = categories[0];
+                    this.logger.log(`사용자 ${userId}의 관심 직군에서 추출한 검색 키워드: ${searchKeyword}`);
+                } else {
+                    this.logger.log(`사용자 ${userId}는 관심 직무/직군이 없습니다.`);
                 }
-
-                this.logger.log(`사용자 ${userId}의 검색 키워드: ${searchKeyword}`);
             }
         }
 
