@@ -67,9 +67,10 @@ export class AuthController {
 
   @Get('profile')
   @ApiBearerAuth('access-token')
-  @ApiOperation({ summary: '프로필 조회', description: '현재 로그인한 사용자의 프로필을 조회합니다.' })
-  @ApiResponse({ status: 200, description: '프로필 조회 성공' })
+  @ApiOperation({ summary: '유저 정보 조회', description: '현재 로그인한 사용자의 이름을 반환합니다.' })
+  @ApiResponse({ status: 200, description: '유저 정보 조회 성공', schema: { example: { name: 'johndoe' } } })
   @ApiResponse({ status: 404, description: '존재하지 않는 사용자' })
+  @ApiResponse({ status: 401, description: '인증 실패' })
   async getProfile(@Req() req: AuthenticatedRequest) {
     return await this.authService.getProfile(req.user.id);
   }
