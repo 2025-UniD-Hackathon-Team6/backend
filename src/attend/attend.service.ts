@@ -110,6 +110,7 @@ export class AttendService {
         // 3. AI를 통해 루틴 추천 생성
         const generated = await this.upstage.generateCareerRoutines(
             {
+                userId: userId,
                 positionName: position.name,
                 categoryName: category.name,
                 positionDescription: position.description,
