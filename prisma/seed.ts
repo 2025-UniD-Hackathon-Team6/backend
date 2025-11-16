@@ -15,7 +15,7 @@ const jobs: {
 }[] = [
   {
     name: "개발",
-    description: "개발 직군",
+    description: "프론트엔드, 백엔드, 모바일",
     positions: [
         {
             name: "PM",
@@ -31,7 +31,36 @@ const jobs: {
         },
     ]
   },
-
+  {
+    name: "데이터 분석",
+    description: "데이터 분석, AI/ML",
+    positions: [
+    ]
+  },
+  {
+    name: "디자인",
+    description: "UI/UX, 그래픽 디자인",
+    positions: [
+    ]
+  },
+  {
+    name: "마케팅",
+    description: "디지털 마케팅, 콘텐츠",
+    positions: [
+    ]
+  },
+  {
+    name: "금융",
+    description: "투자, 재무 분석",
+    positions: [
+    ]
+  },
+  {
+    name: "컨설팅",
+    description: "경영, 전략 컨설팅",
+    positions: [
+    ]
+  },
 ];
 
 async function job() {
@@ -67,10 +96,10 @@ async function user() {
         parallelism: 1,
     });
     await prisma.user.create({
-    data: {
-        name: 'user',
-        password: encryptedPassword,
-    },
+      data: {
+          name: 'user',
+          password: encryptedPassword,
+      },
     });
 }
 
