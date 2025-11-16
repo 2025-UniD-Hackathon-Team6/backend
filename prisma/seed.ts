@@ -110,11 +110,17 @@ async function user() {
         memoryCost: 2 ** 11,
         parallelism: 1,
     });
-    await prisma.user.create({
-    data: {
-        name: 'user',
-        password: encryptedPassword,
-    },
+    await prisma.user.upsert({
+        where: {
+            name: 'user'
+        },
+        update: {
+            password: encryptedPassword
+        },
+        create: {
+            name: 'user',
+            password: encryptedPassword
+        }
     });
 }
 
